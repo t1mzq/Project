@@ -8,6 +8,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.util.ArrayList;
 
 public class GamePanel extends JPanel implements Runnable {
     final int originalTileSize = 32; //sprite size
@@ -19,12 +20,16 @@ public class GamePanel extends JPanel implements Runnable {
     final int screenWidth = tileSize*maxScreenCol;
     final int screenHeight=tileSize*maxScreenRow;
 
-    int FPS = 12;
+    int spawnDelay = 70; // number of frames to wait
+    int spawnTimer = 0;  // will increment every frame
+    boolean secondBulletSpawned = false;
+
+    int FPS = 50;
 
     KeyHandler keyH = new KeyHandler();
     Thread gameThread;
     Player player = new Player(this,keyH);
-    Bullet bullet = new Bullet(this, screenWidth, screenHeight);
+    ArrayList<Bullet> bullets = new ArrayList<>();
     fallingBullets fb = new fallingBullets(this, screenWidth, screenHeight);
 
 
@@ -39,6 +44,23 @@ public class GamePanel extends JPanel implements Runnable {
         this.setDoubleBuffered(true);
         this.addKeyListener(keyH);
         this.setFocusable(true);
+        for (int i = 0; i < 5; i++) {
+            bullets.add(new Bullet(this, screenWidth, screenHeight));
+        }
+
+        // ✅ Initialize bullets list ONCE
+        bullets = new ArrayList<>();
+
+        // Add your original set of bullets
+        bullets.add(new Bullet(this, screenWidth, screenHeight, 300, 0));
+        bullets.add(new Bullet(this, screenWidth, screenHeight, 600, 0));
+        bullets.add(new Bullet(this, screenWidth, screenHeight, 900, 0));
+
+        // ✅ Spawn first bullet at fixed X for delayed spawn
+        int spawnX = 200;
+        Bullet first = new Bullet(this, screenWidth, screenHeight);
+        first.x = spawnX;
+        bullets.add(first);
     }
 
     public void starGameThread(){
@@ -58,9 +80,13 @@ public class GamePanel extends JPanel implements Runnable {
 
             update();
 
-            if (player.hasCollision(bullet)){
-                gameOver = true;
+            for (Bullet b : bullets) {
+                if (player.hasCollision(b)) {
+                    gameOver = true;
+                    break;
+                }
             }
+
 
             repaint();
 
@@ -84,9 +110,22 @@ public class GamePanel extends JPanel implements Runnable {
     public void update(){
         if (!gameOver) {
             player.update();
-            bullet.update();
+            for (Bullet b : bullets) {
+                b.update();
+            }
             fb.update();
         }
+        if (!secondBulletSpawned) {
+            spawnTimer++;
+
+            if (spawnTimer >= spawnDelay) {
+                Bullet staggered = new Bullet(this, screenWidth, screenHeight);
+                staggered.x = 200; // same X as the first
+                bullets.add(staggered);
+                secondBulletSpawned = true;
+            }
+        }
+
 
     }
     public void paintComponent(Graphics g) {
@@ -95,8 +134,9 @@ public class GamePanel extends JPanel implements Runnable {
         Graphics2D g2 = (Graphics2D)g;
 
         player.draw(g2);
-        bullet.draw(g2);
-        fb.draw(g2);
+        for (Bullet b : bullets) {
+            b.draw(g2);
+        }
 
         if (gameOver) {
             g2.setColor(Color.red);
@@ -108,4 +148,21 @@ public class GamePanel extends JPanel implements Runnable {
         g2.dispose();
 
     }
+    class delayBullets {
+        int x;
+        int delay;
+        int timer = 0;
+        boolean spawned = false;
+
+        public delayBullets(int x, int delay) {
+            this.x = x;
+            this.delay = delay;
+        }
+
+        public boolean readyToSpawn() {
+            timer++;
+            return !spawned && timer >= delay;
+        }
+    }
+
 }

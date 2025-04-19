@@ -10,7 +10,6 @@ public class fallingBullets extends Bullet{
     }
     @Override
     public void setDefaultValues(){
-        x=500;
         y=0;
     }
 

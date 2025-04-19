@@ -25,7 +25,6 @@ public class Bullet extends Entity {
     }
 
     public void setDefaultValues(){
-        x=300;
         y=0;
     }
 
@@ -42,4 +41,14 @@ public class Bullet extends Entity {
         g2.fillRect(x,y,gp.tileSize,gp.tileSize);
 
     }
+    public Bullet(GamePanel gp, int screenWidth, int screenHeight, int x, int y) {
+        super(gp);
+        this.gp = gp;
+        this.screenWidth = screenWidth;
+        this.screenHeight = screenHeight;
+        this.x = x;
+        this.y = y;
+        speed = 4;
+    }
+
 }
